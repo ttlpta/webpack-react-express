@@ -1,7 +1,10 @@
 const webpack = require('webpack');
 const path = require('path');
+const glob = require("glob");
 const nodeExternals = require('webpack-node-externals');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
+const TerserJSPlugin = require('terser-webpack-plugin');
 
 function recursiveIssuer(m) {
   if (m.issuer) {
@@ -63,25 +66,23 @@ module.exports = [
   },
   {
     mode : 'development', 
-    entry: {
-      index: path.resolve(__dirname, 'src/test/styles.css'),
-    },
+    entry: glob.sync(path.resolve(__dirname, 'src/test/*.css')),
     optimization: {
+      minimizer: [new TerserJSPlugin({}), new OptimizeCSSAssetsPlugin({})],
       splitChunks: {
         cacheGroups: {
-          fooStyles: {
-            name: 'foo',
-            test: (m, c, entry = 'foo') => m.constructor.name === 'CssModule' && recursiveIssuer(m) === entry,
+          styles: {
+            name: 'assets/styles',
+            test: /\.(sa|sc|c)ss$/,
             chunks: 'all',
             enforce: true,
-          }
+          },
         },
       },
     },
     plugins: [
       new MiniCssExtractPlugin({
-        filename: '[name].css',
-        chunkFilename: '[id].css',
+        filename: '[name].css'
       }),
     ],
     module: {
